@@ -60,7 +60,7 @@ default_config = SimulationConfig(
         annual_degradation=0.005
     ),
     battery=BatteryConfig(
-        capacity=500,
+        capacity=800,
         initial_charge=250,
         efficiency=0.9
     ),

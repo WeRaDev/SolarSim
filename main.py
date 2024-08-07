@@ -23,7 +23,7 @@ from matplotlib.dates import DateFormatter
 
 # Reporting and plotting functions
 from reporting import generate_report_off_grid
-from visualization import plot_energy_data, plot_battery_profile
+from visualization import generate_charts
 from config import WeatherConfig, SolarParkConfig, BatteryConfig, EnergyProfileConfig, SimulationConfig, load_config
 
 # Set up logging
@@ -41,21 +41,10 @@ def main():
         simulator = Simulator(config)
         results = simulator.run_annual_simulation()
         results_summary = simulator.generate_report(results)
-
+        # Generate reports
         generate_report_off_grid(results_summary, simulator.solar_park, simulator.battery)
-
-        plot_energy_data({
-            'Production': results_summary['hourly_production'],
-            'Consumption': results_summary['hourly_consumption']['total']
-        }, 'Energy Production and Consumption', 'Energy (kWh)')
-        
-        plot_energy_data({
-            'Farm Irrigation': results_summary['hourly_consumption']['farm_irrigation'],
-            'Data Center': results_summary['hourly_consumption']['data_center'],
-            'Extra': results_summary['hourly_production'] - results_summary['hourly_consumption']['total']
-        }, 'Energy Profile', 'Energy (kWh)', plot_type='area', stacked=True)
-        
-        plot_battery_profile(results_summary)
+        # Generate charts
+        generate_charts()  
         
         logger.info("Simulation completed successfully")
     except Exception as e:
