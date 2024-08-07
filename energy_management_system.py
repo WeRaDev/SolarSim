@@ -38,7 +38,16 @@ class EnergyManagementSystem:
 
         remaining_energy = production
 
-        # Priority 1: Irrigation
+        # Priority 1: Servers
+        if remaining_energy >= server_need:
+            allocation['servers'] = server_need
+            remaining_energy -= server_need
+        else:
+            allocation['servers'] = remaining_energy
+            remaining_energy = 0
+            allocation['energy_deficit'] += server_need - allocation['servers']
+            
+        # Priority 2: Irrigation
         if remaining_energy >= irrigation_need:
             allocation['irrigation'] = irrigation_need
             remaining_energy -= irrigation_need
@@ -47,25 +56,16 @@ class EnergyManagementSystem:
             remaining_energy = 0
             allocation['energy_deficit'] += irrigation_need - allocation['irrigation']
 
-        # Priority 2: Servers
-        if remaining_energy >= server_need:
-            allocation['servers'] = server_need
-            remaining_energy -= server_need
-        else:
-            allocation['servers'] = remaining_energy
-            remaining_energy = 0
-            allocation['energy_deficit'] += server_need - allocation['servers']
-
-        # Priority 3: Battery Charging
+        #  Priority 3: GPU (if any left)
+        if remaining_energy > 0:
+            allocation['gpu'] = self.energy_profile.gpu_power_consumption(remaining_energy)
+            remaining_energy -= allocation['gpu']
+            
+        # Use remaining energy for Battery Charging
         if remaining_energy > 0:
             charged_energy = self.battery.charge_battery(remaining_energy, weather['temperature'])
             allocation['battery_change'] = charged_energy
             remaining_energy -= charged_energy
-
-        # Use remaining energy for GPU (if any left)
-        if remaining_energy > 0:
-            allocation['gpu'] = self.energy_profile.gpu_power_consumption(remaining_energy)
-            remaining_energy -= allocation['gpu']
 
         # If there's still an energy deficit, try to discharge from battery
         if allocation['energy_deficit'] > 0:
