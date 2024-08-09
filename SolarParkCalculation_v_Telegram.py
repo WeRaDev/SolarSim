@@ -10,6 +10,15 @@ from config import load_config
 class WeatherSimulator:
     def __init__(self, location: str):
         self.location = location
+        # v1 - initial parameters of program
+        # self.monthly_data = {
+        #     'sun_hours': [5.7, 6.7, 7.5, 8.6, 10.2, 11.6, 12.1, 11.4, 9.6, 7.7, 6.4, 5.9],
+        #     'precipitation': [59.3, 49.5, 49.4, 55.4, 46.5, 11.2, 1.4, 5.0, 27.1, 65.8, 64.5, 79.5],
+        #     'temp': [10, 11, 14, 16, 19, 25, 30, 33, 29, 24, 18, 15],
+        #     'wind_speed': [22, 22, 22, 22, 22, 22, 25, 22, 22, 22, 22, 22],
+        #     'humidity': [71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71]
+        # } 
+        # v2 - same parameters as in main program (except wind_speed)
         self.monthly_data = {
             'sun_hours': [7.18, 9.18, 10.07, 11.52, 13.34, 13.89, 14.0, 13.56, 11.19, 8.85, 7.38, 7.33],
             'precipitation': [24.16, 27.53, 36.22, 41.97, 26.91, 6.36, 1.76, 2.97, 16.72, 40.79, 41.49, 25.15],
