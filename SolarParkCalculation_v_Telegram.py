@@ -1,7 +1,11 @@
+# Calculation, Sent over Telegram version
+# Key notes:
+# 1) WeatherSimulator doesn't have per hourly simulation (minimal is per day)
+# 2) WeatherSimulator daily simulation has dependency from previous day
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Dict, Any
-from datetime import datetime, timedelta
+from config import load_config
 
 class WeatherSimulator:
     def __init__(self, location: str):
@@ -140,16 +144,14 @@ def plot_energy_production(results: Dict[str, Any]):
     plt.show()
 
 class EnergyProfile:
-    def __init__(self):
-        self.pumps_power = 90  # kW
-        self.programmer_power = 0.05  # kW
-        self.dosing_pump_power = 1  # kW
-        
+    def __init__(self, config):
+        self.pumps_power = config.pumps_power
+        self.programmer_power = config.programmer_power
+        self.dosing_pump_power = config.dosing_pump_power
+        self.irrigation_months = np.array(config.irrigation_months)
         self.pumps_hours = 8
         self.programmer_hours = 24
         self.dosing_pump_hours = 8
-        
-        self.irrigation_months = [3, 4, 5, 6, 7, 8, 9]  # April to October (0-indexed)
 
     def daily_consumption(self, month: int, is_cloudy: bool) -> float:
         if month in self.irrigation_months and not is_cloudy:
@@ -169,10 +171,10 @@ class EnergyProfile:
         return np.array(daily_consumption)
 
 class BatteryStorage:
-    def __init__(self, capacity: float):
-        self.capacity = capacity  # kWh
-        self.charge = capacity * 0.1  # Start at 50% charge
-        self.efficiency = 0.9  # 90% round-trip efficiency
+    def __init__(self, capacity: float, initial_charge: float = None, efficiency: float = 0.9):
+        self.capacity = capacity
+        self.charge = initial_charge if initial_charge is not None else capacity * 0.5
+        self.efficiency = efficiency
 
     def charge_battery(self, energy: float) -> float:
         energy_to_store = energy * np.sqrt(self.efficiency)
@@ -270,17 +272,20 @@ def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimul
     print(f"Minimum Battery Level: {min_battery_level:.2f} kWh ({min_battery_level/battery.capacity:.2%} of capacity)")
 
 def main():
-    # Solar park specifications
-    location = "Beja, Portugal"
-    total_capacity = 947.52  # kWp
-    inverter_capacity = 800  # kWn
-    performance_ratio = 0.75
-    battery_capacity = 500  # kWh (increased for off-grid operation)
-
     # Create simulators
-    solar_park = SolarParkSimulator(location, total_capacity, inverter_capacity, performance_ratio)
-    energy_profile = EnergyProfile()
-    battery = BatteryStorage(battery_capacity)
+    config = load_config()
+    solar_park = SolarParkSimulator(
+        location=config.weather.location,
+        total_capacity=config.solar_park.total_capacity,
+        inverter_capacity=config.solar_park.inverter_capacity,
+        performance_ratio=config.solar_park.performance_ratio
+    )
+    energy_profile = EnergyProfile(config.energy_profile)
+    battery = BatteryStorage(
+        capacity=config.battery.capacity,
+        initial_charge=config.battery.initial_charge,
+        efficiency=config.battery.efficiency
+    )
     
     # Run simulations
     simulation_results = solar_park.run_simulation()

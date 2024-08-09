@@ -1,3 +1,8 @@
+# Calculation, last actual version
+# Key notes:
+# 1) WeatherSimulator does have per hourly simulation
+# 2) WeatherSimulator hourly data is linearly interpolated from montly data
+
 import numpy as np
 from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
