@@ -9,7 +9,6 @@ https://www.mermaidchart.com/app/diagrams/7b9d6222-be50-4692-9cdc-b0e12a5f6c8c?r
 ## SVG
 
 ![Alt text](./Diagram.svg)
-<img src="./Diagram.svg">
 
 ### Source
 ```

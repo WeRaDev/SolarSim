@@ -1,5 +1,3 @@
-from config import SimulationConfig
-from numba import jit
 from solar_park_simulator import SolarParkSimulator
 from energy_profile import EnergyProfile
 from battery_storage import BatteryStorage
@@ -9,7 +7,7 @@ import numpy as np
 import pandas as pd
 import csv
 import os
-from logging_config import setup_logging, log_exceptions, SimulationError, get_logger
+from logging_config import setup_logging, log_exceptions, get_logger
 
 class Simulator:
     def __init__(self, config):
