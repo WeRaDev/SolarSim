@@ -757,7 +757,7 @@ def main():
     
     # Generate and save debug report
     debug_report = energy_profile.generate_debug_report()
-    with open('energy_profile_debug_report.txt', 'w') as f:
+    with open('reports/energy_profile_debug_report.txt', 'w') as f:
         f.write(debug_report)
 
     # Calculate totals and averages
@@ -789,7 +789,7 @@ def main():
         full_report += daily_report + "\n" + "=" * 80 + "\n\n"
 
     # Save the full report
-    with open('comprehensive_energy_report.txt', 'w') as f:
+    with open('reports/comprehensive_energy_report.txt', 'w') as f:
         f.write(full_report)
     # Generate and print report
     generate_report_off_grid(results_summary, solar_park, battery)
