@@ -8,6 +8,9 @@ import pandas as pd
 import csv
 import os
 from logging_config import setup_logging, log_exceptions, get_logger
+import logging
+from SolarCoreSim_v_3_5 import generate_report_off_grid, plot_energy_data, plot_battery_profile
+from config import load_config
 
 class Simulator:
     def __init__(self, config):
@@ -165,8 +168,9 @@ def main():
     battery_capacity = 500  # kWh
 
     # Create simulator
-    simulator = Simulator(location, total_capacity, inverter_capacity, performance_ratio, battery_capacity)
-    
+    config = load_config()
+    simulator = Simulator(config)
+
     # Run simulation
     results = simulator.run_annual_simulation()
     

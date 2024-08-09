@@ -7,7 +7,7 @@ from matplotlib.dates import DateFormatter
 from collections import defaultdict
 import math
 import logging
-logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 class WeatherSimulator:
     def __init__(self, location: str):
@@ -673,10 +673,11 @@ def validate_simulation_step(step_data: Dict[str, float]):
         raise ValueError(f"Negative battery charge: {step_data['battery_charge']}")
     
     if step_data['total_consumption'] == 0:
-        logging.warning(f"Zero consumption at {step_data['datetime']}")
+        logger.warning(f"Zero consumption at {step_data['datetime']}")
     
     if step_data['production'] == 0 and step_data['sun_intensity'] > 0:
-        logging.warning(f"Zero production with non-zero sun intensity at {step_data['datetime']}")
+        logger.warning(f"Zero production with non-zero sun intensity at {step_data['datetime']}")
+
 
 def generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator, solar_park: SolarParkSimulator, 
                                         energy_profile: EnergyProfile, battery: BatteryStorage, 
@@ -730,7 +731,8 @@ def generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator,
         report += f"    Hour {hour}: {surplus:.2f} kWh\n"
 
     return report
-    
+
+
 def main():
     # Solar park specifications
     location = "Beja, Portugal"
