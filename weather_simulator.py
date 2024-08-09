@@ -1,3 +1,8 @@
+# Calculation, last actual version
+# Key notes:
+# 1) WeatherSimulator does have per hourly simulation
+# 2) WeatherSimulator hourly data is linearly interpolated from montly data
+
 import numpy as np
 from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
@@ -29,6 +34,9 @@ class WeatherSimulator:
         wind_speed = np.interp(day_of_year, self._mid_month_days(), self.monthly_data['wind_speed'])
 
         # Simulate hourly variations
+        # TODO: Add accurate formula of solar hour angle calculation
+        # https://gml.noaa.gov/grad/solcalc/solareqns.PDF
+        # Example: https://solarsena.com/solar-hour-angle-calculator-formula/
         hour_angle = (hour - 12) * 15  # Solar hour angle
         sun_intensity = max(0, np.cos(np.radians(hour_angle))) * (sun_hours / 12)  # Adjust for actual sun hours
         
