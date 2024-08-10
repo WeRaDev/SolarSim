@@ -1,13 +1,17 @@
-import numpy as np
 from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
+from solar_park_simulator import SolarParkSimulator
+from energy_profile import EnergyProfile
+from battery_storage import BatteryStorage
+from helper import DateHelper
 
 class EnergyManagementSystem:
-    def __init__(self, solar_park, energy_profile, battery):
+    def __init__(self, solar_park: SolarParkSimulator, energy_profile: EnergyProfile, battery: BatteryStorage):
         self.solar_park = solar_park
         self.energy_profile = energy_profile
         self.battery = battery
         self.logger = get_logger(self.__class__.__name__)
+
     @log_exceptions    
     def allocate_energy(self, production: float, month: int, hour: int, weather: Dict[str, Any]) -> Dict[str, float]:
         self.logger.debug(f"Allocating energy: production={production}, month={month}, hour={hour}")
@@ -81,4 +85,4 @@ class EnergyManagementSystem:
 
     @staticmethod
     def _get_month(day: int) -> int:
-        return np.searchsorted(np.cumsum([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]), day + 1)
+        return DateHelper.get_month(day)

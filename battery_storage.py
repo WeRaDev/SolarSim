@@ -11,6 +11,7 @@ class BatteryStorage:
 
     def temperature_factor(self, temperature: float) -> float:
         return 1 - 0.005 * abs(temperature - 25)
+    
     @log_exceptions
     def charge_battery(self, energy: float, temperature: float) -> float:
         self.previous_charge = self.charge

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
+from helper import DateHelper
 
 class WeatherSimulator:
     def __init__(self, location: str, year: int):
@@ -8,7 +9,7 @@ class WeatherSimulator:
         self.location = location
         self.year = year
         self.monthly_data = self.get_monthly_data()
-        self.days_in_month = self.get_days_in_month(year)
+        self.days_in_month = DateHelper.get_days_in_month(year)
 
     @staticmethod
     def get_monthly_data():
@@ -22,12 +23,7 @@ class WeatherSimulator:
             'wind_speed': [4.5, 4.8, 5.2, 5.5, 5.0, 4.8, 4.5, 4.3, 4.0, 4.2, 4.5, 4.7]
         }
     
-    @staticmethod
-    def get_days_in_month(year: int):
-        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):
-            days_in_month[1] = 29
-        return days_in_month
+
 
     @log_exceptions
     def simulate_hour(self, day_of_year: int, hour: int) -> Dict[str, Any]:
@@ -67,7 +63,7 @@ class WeatherSimulator:
     def simulate_year(self) -> List[Dict[str, Any]]:
         self.logger.info("Start annual simulation")
         hourly_weather = []
-        for day in range(365):
+        for day in range(DateHelper.get_days(self.year)):
             for hour in range(24):
                 hour_weather = self.simulate_hour(day + 1, hour)
                 hourly_weather.append(hour_weather)

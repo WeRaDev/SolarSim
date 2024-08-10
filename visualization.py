@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import os
 from typing import Dict, Any
-from solar_park_simulator import SolarParkSimulator
-from battery_storage import BatteryStorage
 import numpy as np
+from config import load_config
 
 def ensure_charts_directory():
     if not os.path.exists('charts'):
@@ -17,7 +16,7 @@ def load_data():
     df.set_index('datetime', inplace=True)
     return df
 
-def plot_chart(df, x, y, title, xlabel, ylabel, scale='year'):
+def plot_chart(df, x: str, y: str, title: str, xlabel: str, ylabel: str, scale='year'):
     plt.figure(figsize=(12, 6))
     if isinstance(y, list):
         for col in y:
@@ -42,9 +41,9 @@ def plot_chart(df, x, y, title, xlabel, ylabel, scale='year'):
     plt.savefig(f"charts/{title.lower().replace(' ', '_')}_{scale}.png")
     plt.close()
 
-def plot_energy_data(data: Dict[str, np.ndarray], title: str, y_label: str, 
+def plot_energy_data(data: Dict[str, np.ndarray], title: str, y_label: str, year: int, 
                      plot_type: str = 'line', stacked: bool = False):
-    dates = pd.date_range(start='2023-01-01', periods=8760, freq='h')
+    dates = pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31 23:59', freq='h')
     df = pd.DataFrame(data, index=dates)
     
     if 'Extra' in df.columns:
@@ -68,7 +67,7 @@ def plot_energy_data(data: Dict[str, np.ndarray], title: str, y_label: str,
     ax1.legend()
 
     # Monthly plot (using Aug-Sept as an example)
-    monthly_data = df['2023-08-15':'2023-09-15']
+    monthly_data = df[f'{year}-08-15':f'{year}-09-15']
     if plot_type == 'area' and stacked:
         monthly_data[['Farm Irrigation', 'Data Center', 'Extra_Positive']].plot(ax=ax2, kind='area', stacked=True)
         if 'Extra_Negative' in monthly_data.columns:
@@ -84,8 +83,8 @@ def plot_energy_data(data: Dict[str, np.ndarray], title: str, y_label: str,
     plt.tight_layout()
     plt.show()
 
-def plot_battery_profile(results: Dict[str, Any]):
-    dates = pd.date_range(start='2023-01-01', periods=8760, freq='h')
+def plot_battery_profile(results: Dict[str, Any], year: int):
+    dates = pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31 23:59', freq='h')
     df = pd.DataFrame({
         'Battery Charge': results['battery_charge'],
         'Energy Deficit': results['energy_deficit']
@@ -101,7 +100,7 @@ def plot_battery_profile(results: Dict[str, Any]):
     ax1.legend()
 
     # Monthly plot (using Aug-Sept as an example)
-    july_data = df['2023-08-15':'2023-09-15']
+    july_data = df[f'{year}-08-15':f'{year}-09-15']
     july_data.plot(ax=ax2)
     ax2.set_title('Hourly Battery Charge and Energy Deficit (July)')
     ax2.set_xlabel('Date')
@@ -113,6 +112,9 @@ def plot_battery_profile(results: Dict[str, Any]):
     plt.show()
 
 def generate_charts():
+    config = load_config()
+    year = config.year
+    
     ensure_charts_directory()
     df = load_data()
     
@@ -121,10 +123,10 @@ def generate_charts():
     
     # Define time ranges
     year_range = df.index
-    summer_week = df.loc['2023-08-15':'2023-08-22'].copy()
-    winter_week = df.loc['2023-03-15':'2023-03-22'].copy()
-    summer_day = df.loc['2023-08-23'].copy()
-    winter_day = df.loc['2023-03-23'].copy()
+    summer_week = df.loc[f'{year}-08-15':f'{year}-08-22'].copy()
+    winter_week = df.loc[f'{year}-03-15':f'{year}-03-22'].copy()
+    summer_day = df.loc[f'{year}-08-23'].copy()
+    winter_day = df.loc[f'{year}-03-23'].copy()
     
     # Calculate available energy for each subset
     for subset in [summer_week, winter_week, summer_day, winter_day]:

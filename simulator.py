@@ -4,7 +4,6 @@ from battery_storage import BatteryStorage
 from energy_management_system import EnergyManagementSystem
 from weather_simulator import WeatherSimulator
 from datetime import datetime, timedelta
-import numpy as np
 import pandas as pd
 import csv
 import os
@@ -12,10 +11,12 @@ from logging_config import setup_logging, log_exceptions, get_logger
 import logging
 from visualization import plot_energy_data, plot_battery_profile
 from reporting import generate_report_off_grid
-from config import load_config
+from config import load_config, SimulationConfig
+from typing import Dict, Any, List, Any
+from helper import DateHelper
 
 class Simulator:
-    def __init__(self, config):
+    def __init__(self, config: SimulationConfig):
         self.logger = get_logger(self.__class__.__name__)
         self.logger.info("Initializing Simulator")
         self.config = config
@@ -40,7 +41,7 @@ class Simulator:
         os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
 
     @log_exceptions
-    def run_annual_simulation(self):
+    def run_annual_simulation(self) -> List[Dict[str, Any]]:
         self.logger.info("Starting annual simulation")
         results = []
         with open(self.data_file, 'w', newline='') as csvfile:
@@ -51,7 +52,7 @@ class Simulator:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             
-            for day in range(365):
+            for day in range(DateHelper.get_days(self.config.year)):
                 daily_results = self._run_daily_simulation(day)
                 results.extend(daily_results)
                 for result in daily_results:
@@ -60,14 +61,14 @@ class Simulator:
         self.logger.info("Completed annual simulation")
         return results
 
-    def _run_daily_simulation(self, day):
+    def _run_daily_simulation(self, day: int) -> List[Dict[str, Any]]:
         daily_results = []
         for hour in range(24):
             result = self._run_hourly_simulation(day, hour)
             daily_results.append(result)
         return daily_results
 
-    def _run_hourly_simulation(self, day, hour):
+    def _run_hourly_simulation(self, day: int, hour: int) -> Dict[str, Any]:
         month = self._get_month(day)
         weather = self.solar_park.weather_simulator.simulate_hour(day + 1, hour)
         production = self.solar_park.calculate_hourly_energy(weather)
@@ -95,10 +96,10 @@ class Simulator:
         self._validate_simulation_step(step_data)
         return step_data
 
-    def _get_month(self, day):
-        return np.searchsorted(np.cumsum([31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]), day + 1)
+    def _get_month(self, day: int):
+        return DateHelper.get_month(day)
 
-    def _validate_simulation_step(self, step_data):
+    def _validate_simulation_step(self, step_data: Dict[str, Any]):
         if step_data['production'] < 0:
             self.logger.warning(f"Negative energy production: {step_data['production']} at {step_data['datetime']}")
         if step_data['total_consumption'] < 0:
@@ -110,7 +111,7 @@ class Simulator:
         if step_data['production'] == 0 and step_data['sun_intensity'] > 0:
             self.logger.info(f"Zero production with non-zero sun intensity at {step_data['datetime']}")
 
-    def generate_report(self, results):
+    def generate_report(self, results: List[Dict[str, Any]]) -> str:
         df_results = pd.DataFrame(results)
         
         total_production = df_results['production'].sum()
@@ -163,12 +164,6 @@ def main():
     logger.debug("Logging initialized")
     logger.info("Starting simulation")
     logger.warning("This is a warning message")
-    # Solar park specifications
-    location = "Beja, Portugal"
-    total_capacity = 947.52  # kWp
-    inverter_capacity = 800  # kWn
-    performance_ratio = 0.75
-    battery_capacity = 500  # kWh
 
     # Create simulator
     config = load_config()
@@ -187,15 +182,15 @@ def main():
     plot_energy_data({
         'Production': results_summary['hourly_production'],
         'Consumption': results_summary['hourly_consumption']['total']
-    }, 'Energy Production and Consumption', 'Energy (kWh)')
+    }, 'Energy Production and Consumption', 'Energy (kWh)', config.year)
     
     plot_energy_data({
         'Farm Irrigation': results_summary['hourly_consumption']['farm_irrigation'],
         'Data Center': results_summary['hourly_consumption']['data_center'],
         'Extra': results_summary['hourly_production'] - results_summary['hourly_consumption']['total']
-    }, 'Energy Profile', 'Energy (kWh)', plot_type='area', stacked=True)
+    }, 'Energy Profile', 'Energy (kWh)', config.year, plot_type='area', stacked=True)
     
-    plot_battery_profile(results_summary)
+    plot_battery_profile(results_summary, config.year)
 
 if __name__ == "__main__":
     main()
