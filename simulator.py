@@ -9,7 +9,8 @@ import csv
 import os
 from logging_config import setup_logging, log_exceptions, get_logger
 import logging
-from visualization import generate_report_off_grid, plot_energy_data, plot_battery_profile
+from visualization import plot_energy_data, plot_battery_profile
+from reporting import generate_report_off_grid
 from config import load_config
 
 class Simulator:

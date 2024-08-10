@@ -42,24 +42,6 @@ def plot_chart(df, x, y, title, xlabel, ylabel, scale='year'):
     plt.savefig(f"charts/{title.lower().replace(' ', '_')}_{scale}.png")
     plt.close()
 
-def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimulator, battery: BatteryStorage):
-    print(f"Off-Grid Solar Park Simulation Report for {solar_park.location}")
-    print("=" * 70)
-    print(f"Total Capacity: {solar_park.total_capacity:.2f} kWp")
-    print(f"Inverter Capacity: {solar_park.inverter_capacity:.2f} kWn")
-    print(f"Battery Capacity: {battery.capacity:.2f} kWh")
-    print(f"Performance Ratio: {solar_park.performance_ratio:.2f}")
-    print(f"Specific Yield: {results['specific_yield']:.2f} kWh/kWp")
-    print(f"\nTotal Annual Energy Production: {np.sum(results['hourly_production']):.2f} kWh")
-    print(f"Total Annual Energy Consumption: {np.sum(results['hourly_consumption']['total']):.2f} kWh")
-    print(f"Total Energy Deficit: {np.sum(results['energy_deficit']):.2f} kWh")
-    
-    utilization_ratio = np.sum(results['hourly_consumption']['total']) / np.sum(results['hourly_production'])
-    print(f"\nEnergy Utilization Ratio: {utilization_ratio:.2%}")
-    
-    min_battery_level = np.min(results['battery_charge'])
-    print(f"Minimum Battery Level: {min_battery_level:.2f} kWh ({min_battery_level/battery.capacity:.2%} of capacity)")
-
 def plot_energy_data(data: Dict[str, np.ndarray], title: str, y_label: str, 
                      plot_type: str = 'line', stacked: bool = False):
     dates = pd.date_range(start='2023-01-01', periods=8760, freq='h')
