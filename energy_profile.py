@@ -52,38 +52,3 @@ class EnergyProfile:
         max_gpu_power = gpu_power * num_gpus
         utilization = min(1, available_energy / max_gpu_power)
         return max_gpu_power * utilization * np.random.uniform(gpu_utilization_range[0], gpu_utilization_range[1])
-
-    @log_exceptions
-    def hourly_consumption(self, month, hour, weather, available_energy):
-        return self._hourly_consumption_optimized(
-            month, hour, weather['is_raining'], available_energy,
-            self.pumps_power, self.dosing_pump_power, self.programmer_power,
-            self.irrigation_months, self.staking_nodes, self.staking_power,
-            self.gpu_power, self.gpu_utilization_range, self.num_gpus
-        )
-
-    @staticmethod
-    @jit(nopython=True)
-    def _hourly_consumption_optimized(month, hour, is_raining, available_energy,
-                                      pumps_power, dosing_pump_power, programmer_power,
-                                      irrigation_months, staking_nodes, staking_power,
-                                      gpu_power, gpu_utilization_range, num_gpus):
-        irrigation_consumption = 0
-        if month in irrigation_months and not is_raining:
-            irrigation_consumption = pumps_power + dosing_pump_power + programmer_power
-
-        server_consumption = staking_power * staking_nodes * (1 + 0.2 * np.sin(hour * np.pi / 12))
-
-        remaining_energy = available_energy - irrigation_consumption - server_consumption
-        gpu_consumption = min(gpu_power * num_gpus, max(0, remaining_energy))
-        gpu_utilization = min(1, gpu_consumption / (gpu_power * num_gpus))
-        gpu_consumption *= np.random.uniform(gpu_utilization_range[0], gpu_utilization_range[1])
-
-        total_consumption = irrigation_consumption + server_consumption + gpu_consumption
-
-        return {
-            'farm_irrigation': irrigation_consumption,
-            'data_center': server_consumption,
-            'gpu': gpu_consumption,
-            'total': total_consumption
-        }
