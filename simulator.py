@@ -72,7 +72,7 @@ class Simulator:
         energy_deficit = max(0, allocation['total_consumption'] - production - allocation['battery_change'])
         
         step_data = {
-            'datetime': datetime(2023, 1, 1) + timedelta(days=day, hours=hour),
+            'datetime': datetime(self.config.year, 1, 1) + timedelta(days=day, hours=hour),
             'sun_intensity': weather['sun_intensity'],
             'temperature': weather['temperature'],
             'humidity': weather['humidity'],
