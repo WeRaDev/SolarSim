@@ -27,8 +27,8 @@ class EnergyManagementSystem:
             'gpu': 0,
             'battery_change': 0,
             'total_consumption': 0,
-            'energy_deficit': 0
         }
+        _energy_deficit = 0
 
         remaining_energy = production
 
@@ -39,7 +39,7 @@ class EnergyManagementSystem:
         else:
             allocation['servers'] = remaining_energy
             remaining_energy = 0
-            allocation['energy_deficit'] += server_need - allocation['servers']
+            _energy_deficit += server_need - allocation['servers']
             
         # Priority 2: Irrigation
         if remaining_energy >= irrigation_need:
@@ -48,7 +48,7 @@ class EnergyManagementSystem:
         else:
             allocation['irrigation'] = remaining_energy
             remaining_energy = 0
-            allocation['energy_deficit'] += irrigation_need - allocation['irrigation']
+            _energy_deficit += irrigation_need - allocation['irrigation']
 
         #  Priority 3: GPU (if any left)
         if remaining_energy > 0:
@@ -62,10 +62,10 @@ class EnergyManagementSystem:
             remaining_energy -= charged_energy
 
         # If there's still an energy deficit, try to discharge from battery
-        if allocation['energy_deficit'] > 0:
-            battery_discharge = self.battery.discharge_battery(allocation['energy_deficit'], weather['temperature'])
+        if _energy_deficit > 0:
+            battery_discharge = self.battery.discharge_battery(_energy_deficit, weather['temperature'])
             allocation['battery_change'] -= battery_discharge
-            allocation['energy_deficit'] -= battery_discharge
+            _energy_deficit -= battery_discharge
 
         # Calculate total consumption
         allocation['total_consumption'] = sum([allocation['irrigation'], allocation['servers'], allocation['gpu']])
