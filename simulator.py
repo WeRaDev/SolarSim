@@ -2,6 +2,7 @@ from solar_park_simulator import SolarParkSimulator
 from energy_profile import EnergyProfile
 from battery_storage import BatteryStorage
 from energy_management_system import EnergyManagementSystem
+from weather_simulator import WeatherSimulator
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
@@ -18,8 +19,9 @@ class Simulator:
         self.logger = get_logger(self.__class__.__name__)
         self.logger.info("Initializing Simulator")
         self.config = config
+        self.weather_simulator = WeatherSimulator(config.weather.location, config.year)
         self.solar_park = SolarParkSimulator(
-            location=config.weather.location,
+            weather_simulator=self.weather_simulator,
             total_capacity=config.solar_park.total_capacity,
             inverter_capacity=config.solar_park.inverter_capacity,
             performance_ratio=config.solar_park.performance_ratio

@@ -3,10 +3,16 @@ from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
 
 class WeatherSimulator:
-    def __init__(self, location: str):
+    def __init__(self, location: str, year: int):
         self.logger = get_logger(self.__class__.__name__)
         self.location = location
-        self.monthly_data = {
+        self.year = year
+        self.monthly_data = self.get_monthly_data()
+        self.days_in_month = self.get_days_in_month(year)
+
+    @staticmethod
+    def get_monthly_data():
+        return {
             'sun_hours': [7.18, 9.18, 10.07, 11.52, 13.34, 13.89, 14.0, 13.56, 11.19, 8.85, 7.38, 7.33],
             'temp': [10.45, 11.05, 13.47, 16.43, 21.09, 24.92, 27.79, 28.1, 25.4, 20.63, 14.55, 11.62],
             'humidity': [80.81, 78.19, 77.66, 73.91, 60.69, 52.84, 48.86, 47.07, 51.93, 60.7, 73.48, 76.96],
@@ -15,7 +21,14 @@ class WeatherSimulator:
             'cloud_cover': [0.6, 0.55, 0.5, 0.45, 0.3, 0.2, 0.1, 0.15, 0.3, 0.45, 0.55, 0.6],
             'wind_speed': [4.5, 4.8, 5.2, 5.5, 5.0, 4.8, 4.5, 4.3, 4.0, 4.2, 4.5, 4.7]
         }
-        self.days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    
+    @staticmethod
+    def get_days_in_month(year: int):
+        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):
+            days_in_month[1] = 29
+        return days_in_month
+
     @log_exceptions
     def simulate_hour(self, day_of_year: int, hour: int) -> Dict[str, Any]:
         month = next(m for m, days in enumerate(self._cumulative_days()) if day_of_year <= days) - 1

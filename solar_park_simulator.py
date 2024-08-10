@@ -2,16 +2,14 @@ import numpy as np
 from numba import jit
 from typing import List, Dict, Any
 from logging_config import log_exceptions, get_logger
-from weather_simulator import WeatherSimulator
 
 class SolarParkSimulator:
-    def __init__(self, location, total_capacity, inverter_capacity, performance_ratio):
+    def __init__(self, weather_simulator, total_capacity, inverter_capacity, performance_ratio):
         self.logger = get_logger(self.__class__.__name__)
-        self.location = location
         self.total_capacity = total_capacity
         self.inverter_capacity = inverter_capacity
         self.performance_ratio = performance_ratio
-        self.weather_simulator = WeatherSimulator(location)
+        self.weather_simulator = weather_simulator
         
         # Panel specifications
         self.panel_efficiency = 0.2
