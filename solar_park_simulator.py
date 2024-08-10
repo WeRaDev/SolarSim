@@ -5,13 +5,13 @@ from logging_config import log_exceptions, get_logger
 from weather_simulator import WeatherSimulator
 
 class SolarParkSimulator:
-    def __init__(self, location, total_capacity, inverter_capacity, performance_ratio):
+    def __init__(self, weather_simulator: WeatherSimulator, total_capacity: float, inverter_capacity: float, 
+                 performance_ratio: float):
         self.logger = get_logger(self.__class__.__name__)
-        self.location = location
         self.total_capacity = total_capacity
         self.inverter_capacity = inverter_capacity
         self.performance_ratio = performance_ratio
-        self.weather_simulator = WeatherSimulator(location)
+        self.weather_simulator = weather_simulator
         
         # Panel specifications
         self.panel_efficiency = 0.2
@@ -22,7 +22,7 @@ class SolarParkSimulator:
         self.years_in_operation = 0
 
     @log_exceptions
-    def calculate_hourly_energy(self, weather):
+    def calculate_hourly_energy(self, weather: Dict[str, float]):
         return self._calculate_hourly_energy_optimized(
             self.total_capacity, self.inverter_capacity, self.performance_ratio,
             self.panel_efficiency, self.temp_coefficient, self.dust_factor,
@@ -33,11 +33,11 @@ class SolarParkSimulator:
 
     @staticmethod
     @jit(nopython=True)
-    def _calculate_hourly_energy_optimized(total_capacity, inverter_capacity, performance_ratio,
-                                           panel_efficiency, temp_coefficient, dust_factor,
-                                           misc_losses, annual_degradation, years_in_operation,
-                                           sun_intensity, temperature, humidity,
-                                           cloud_cover, wind_speed, is_raining):
+    def _calculate_hourly_energy_optimized(total_capacity: float, inverter_capacity: float, performance_ratio: float,
+                                           panel_efficiency: float, temp_coefficient: float, dust_factor: float,
+                                           misc_losses: float, annual_degradation: float, years_in_operation: float,
+                                           sun_intensity: float, temperature: float, humidity: float,
+                                           cloud_cover: float, wind_speed: float, is_raining: bool) -> float:
         degradation_factor = (1 - annual_degradation) ** years_in_operation
         base_energy = total_capacity * sun_intensity * performance_ratio * degradation_factor
 

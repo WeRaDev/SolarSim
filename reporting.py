@@ -7,7 +7,7 @@ from energy_management_system import EnergyManagementSystem
 from weather_simulator import WeatherSimulator
 
 def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimulator, battery: BatteryStorage):
-    print(f"Off-Grid Solar Park Simulation Report for {solar_park.location}")
+    print(f"Off-Grid Solar Park Simulation Report for {solar_park.weather_simulator.location}")
     print("=" * 70)
     print(f"Total Capacity: {solar_park.total_capacity:.2f} kWp")
     print(f"Inverter Capacity: {solar_park.inverter_capacity:.2f} kWn")

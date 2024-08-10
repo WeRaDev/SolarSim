@@ -44,6 +44,7 @@ class SimulationConfig:
     gpu_cost_per_unit: float
     staking_rental_price: float
     gpu_rental_price: float
+    year: int
 
 default_config = SimulationConfig(
     weather=WeatherConfig(
@@ -79,7 +80,8 @@ default_config = SimulationConfig(
     capex=2070500,  # Example value, adjust as needed
     gpu_cost_per_unit=42000,  # Example value
     staking_rental_price=0.3,  # per unit per hour
-    gpu_rental_price=2.5  # per unit per hour
+    gpu_rental_price=2.5,  # per unit per hour
+    year = 2023,
 )
 
 def load_config(config_file=None):
