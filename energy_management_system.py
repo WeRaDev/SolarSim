@@ -64,13 +64,11 @@ class EnergyManagementSystem:
             allocation['gpu'] = self.energy_profile.gpu_power_consumption(remaining_energy)
             remaining_energy -= allocation['gpu']
         else:
-            # Calculate future energy needs for servers and irrigation (+1 hour ahead)
-            future_energy_need = self.energy_profile.server_power_consumption(hour + 1)
             # Allocate acceptable discharge equal to hourly discharge rate for 18 hours autonomy
-            acceptable_discharge = self.battery.capacity / 18        
-            if self.battery.charge > acceptable_discharge * 2:
+            acceptable_discharge = (self.battery.capacity - server_need * 24) / 12        
+            if self.battery.charge > acceptable_discharge:
                 # allocates GPUs to use all acceptable discharge
-                allocation['gpu'] = self.energy_profile.gpu_power_consumption(acceptable_discharge - future_energy_need)
+                allocation['gpu'] = self.energy_profile.gpu_power_consumption(acceptable_discharge)
                 allocation['battery_change'] -= self.battery.discharge_battery(acceptable_discharge, weather['temperature'])
                 
         # Use remaining energy for Battery Charging
