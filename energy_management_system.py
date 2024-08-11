@@ -11,11 +11,13 @@ class EnergyManagementSystem:
         self.energy_profile = energy_profile
         self.battery = battery
         self.logger = get_logger(self.__class__.__name__)
-
+        self.irrigation_hours = 0
+        
     @log_exceptions    
     def allocate_energy(self, production: float, month: int, hour: int, weather: Dict[str, Any]) -> Dict[str, float]:
         self.logger.debug(f"Allocating energy: production={production}, month={month}, hour={hour}")
-        
+        if hour == 0:
+            self.irrigation_hours = 0
         # Calculate energy needs
         irrigation_need = self.energy_profile.irrigation_need(month, hour, weather)
         server_need = self.energy_profile.server_power_consumption(hour)
@@ -46,14 +48,16 @@ class EnergyManagementSystem:
                 allocation['battery_change'] -= battery_discharge
                 _energy_deficit -= battery_discharge
             
-        # Priority 2: Irrigation
-        if remaining_energy >= irrigation_need:
-            allocation['irrigation'] = irrigation_need
-            remaining_energy -= irrigation_need
-        else:
-            allocation['irrigation'] = remaining_energy
-            remaining_energy = 0
-            _energy_deficit += irrigation_need - allocation['irrigation']
+        # Priority 2: Irrigation (if any energy left and irrigation conditions met)
+        if remaining_energy > 0 and self.irrigation_hours < 8:
+            irrigation_need = self.energy_profile.irrigation_need(month, hour, weather)
+            if irrigation_need > 0:
+                if remaining_energy >= irrigation_need:
+                    allocation['irrigation'] = irrigation_need
+                    remaining_energy -= irrigation_need
+                    self.irrigation_hours += 1
+                else:
+                    allocation['irrigation'] = 0
 
         # Priority 3: GPU (if any left)
         if remaining_energy > 0:
