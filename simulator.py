@@ -9,7 +9,6 @@ import csv
 import os
 from logging_config import setup_logging, log_exceptions, get_logger
 import logging
-from visualization import plot_energy_data, plot_battery_profile
 from reporting import generate_report_off_grid
 from config import load_config, SimulationConfig
 from typing import Dict, Any, List, Any
@@ -177,20 +176,6 @@ def main():
 
     # Generate and print report
     generate_report_off_grid(results_summary, simulator.solar_park, simulator.battery)
-
-    # Plot energy production, consumption, and battery usage
-    plot_energy_data({
-        'Production': results_summary['hourly_production'],
-        'Consumption': results_summary['hourly_consumption']['total']
-    }, 'Energy Production and Consumption', 'Energy (kWh)', config.year)
-    
-    plot_energy_data({
-        'Farm Irrigation': results_summary['hourly_consumption']['farm_irrigation'],
-        'Data Center': results_summary['hourly_consumption']['data_center'],
-        'Extra': results_summary['hourly_production'] - results_summary['hourly_consumption']['total']
-    }, 'Energy Profile', 'Energy (kWh)', config.year, plot_type='area', stacked=True)
-    
-    plot_battery_profile(results_summary, config.year)
 
 if __name__ == "__main__":
     main()
