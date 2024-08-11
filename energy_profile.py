@@ -40,8 +40,9 @@ class EnergyProfile:
 
     @staticmethod
     @jit(nopython=True)
+    # Staking servers should run 24/7 disregarding the demand but considering cooling efficiency
     def _server_power_consumption_optimized(hour: int, staking_nodes: int, staking_power: float) -> float:
-        return staking_power * staking_nodes * (1 + 0.2 * np.sin(hour * np.pi / 12))
+        return staking_power * 1.3 # Simplified cooling load
 
     @log_exceptions
     def gpu_power_consumption(self, available_energy: float):
@@ -52,6 +53,6 @@ class EnergyProfile:
     @staticmethod
     @jit(nopython=True)
     def _gpu_power_consumption_optimized(available_energy: float, gpu_power: float, num_gpus: int, gpu_utilization_range: List[float]):
-        max_gpu_power = gpu_power * num_gpus
+        max_gpu_power = gpu_power * num_gpus * 1.3 # added simplified cooling load
         utilization = min(1, available_energy / max_gpu_power)
         return max_gpu_power * utilization * np.random.uniform(gpu_utilization_range[0], gpu_utilization_range[1])
