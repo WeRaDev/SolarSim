@@ -54,28 +54,26 @@ class EnergyManagementSystem:
             allocation['irrigation'] = remaining_energy
             remaining_energy = 0
             _energy_deficit += irrigation_need - allocation['irrigation']
-            if _energy_deficit > 0:
-                battery_discharge = self.battery.discharge_battery(_energy_deficit, weather['temperature'])
-                allocation['irrigation'] += battery_discharge
-                allocation['battery_change'] -= battery_discharge
-                _energy_deficit -= battery_discharge
 
-        #  Priority 3: GPU (if any left)
+        # Priority 3: GPU (if any left)
         if remaining_energy > 0:
             allocation['gpu'] = self.energy_profile.gpu_power_consumption(remaining_energy)
             remaining_energy -= allocation['gpu']
-            
+
+        # Calculate future energy needs for servers and irrigation (+1 hour ahead)
+        future_energy_need = self.energy_profile.irrigation_need(month, hour + 1, weather) + self.energy_profile.server_power_consumption(hour + 1)
+        if self.battery.charge > future_energy_need:
+            # Allocate 1% of acceptable discharge
+            acceptable_discharge = (self.battery.charge - future_energy_need) * 0.01
+            battery_discharge = self.battery.discharge_battery(acceptable_discharge, weather['temperature'])
+            allocation['gpu'] += battery_discharge
+            allocation['battery_change'] -= battery_discharge
+                
         # Use remaining energy for Battery Charging
         if remaining_energy > 0:
             charged_energy = self.battery.charge_battery(remaining_energy, weather['temperature'])
             allocation['battery_change'] = charged_energy
             remaining_energy -= charged_energy
-
-        # If there's still an energy deficit, try to discharge from battery
-        if _energy_deficit > 0:
-            battery_discharge = self.battery.discharge_battery(_energy_deficit, weather['temperature'])
-            allocation['battery_change'] -= battery_discharge
-            _energy_deficit -= battery_discharge
 
         # Calculate total consumption
         allocation['total_consumption'] = sum([allocation['irrigation'], allocation['servers'], allocation['gpu']])
