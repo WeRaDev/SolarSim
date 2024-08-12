@@ -30,6 +30,7 @@ def main():
         results_summary = simulator.generate_report(results)
         # Generate reports
         generate_report_off_grid(results_summary, simulator.solar_park, simulator.battery)
+#NEED FIX      generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator, solar_park: SolarParkSimulator, energy_profile: EnergyProfile, battery: BatteryStorage, ems: EnergyManagementSystem)
         # Generate charts
         generate_charts()  
         
