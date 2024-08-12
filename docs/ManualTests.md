@@ -95,6 +95,7 @@ ROI Analysis (7-year period):
   Payback Period: 12.88 years
 ```
 ### Fource run
+```
 __main__ - WARNING - This is a warning message
 Off-Grid Solar Park Simulation Report for Beja, Portugal
 ======================================================================
@@ -123,3 +124,4 @@ ROI Analysis (7-year period):
   Profit: $800577.54
   ROI: 35.84%
   Payback Period: 5.15 years
+```
