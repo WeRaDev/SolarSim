@@ -72,7 +72,7 @@ class Simulator:
         weather = self.solar_park.weather_simulator.simulate_hour(day + 1, hour)
         production = self.solar_park.calculate_hourly_energy(weather)
         allocation = self.ems.allocate_energy(production, month, hour, weather)
-        energy_deficit = max(0, allocation['total_consumption'] - production - allocation['battery_change'])
+        #energy_deficit = max(0, allocation['total_consumption'] - production - allocation['battery_change'])
         
         step_data = {
             'datetime': datetime(self.config.year, 1, 1) + timedelta(days=day, hours=hour),
@@ -89,7 +89,7 @@ class Simulator:
             'battery_change': allocation['battery_change'],
             'total_consumption': allocation['total_consumption'],
             'battery_charge': self.battery.charge,
-            'energy_deficit': energy_deficit
+            'energy_deficit': allocation['_energy_deficit']
         }
         
         self._validate_simulation_step(step_data)
@@ -122,12 +122,14 @@ class Simulator:
         staking_revenue = df_results['servers'].sum() * self.config.staking_rental_price
         gpu_revenue = df_results['gpu'].sum() * self.config.gpu_rental_price
         total_revenue = staking_revenue + gpu_revenue
+        roi = (total_revenue / (self.config.capex + self.config.num_gpus * self.config.gpu_cost_per_unit)) * 100
 
         # ROI Analysis
         total_revenue_7years = total_revenue * 7
-        profit_7years = total_revenue_7years - self.config.capex
-        roi_7years = (profit_7years / self.config.capex) * 100
-        payback_period = self.config.capex / total_revenue
+        capex = (self.config.capex + self.config.num_gpus * self.config.gpu_cost_per_unit)
+        profit_7years = total_revenue_7years - capex
+        roi_7years = (profit_7years / capex) * 100
+        payback_period = capex / total_revenue
 
         results_summary = {
             'hourly_production': df_results['production'].values,
@@ -146,9 +148,11 @@ class Simulator:
             'annual_revenue': {
                 'staking': staking_revenue,
                 'gpu_rental': gpu_revenue,
-                'total': total_revenue
+                'total': total_revenue,
+                'ROI': roi
             },
             'roi_analysis': {
+                'capex': capex,
                 'total_revenue_7years': total_revenue_7years,
                 'profit_7years': profit_7years,
                 'roi_7years': roi_7years,

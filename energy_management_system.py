@@ -29,8 +29,8 @@ class EnergyManagementSystem:
             'gpu': 0,
             'battery_change': 0,
             'total_consumption': 0,
+            '_energy_deficit': 0
         }
-        _energy_deficit = 0
 
         remaining_energy = production
 
@@ -41,12 +41,11 @@ class EnergyManagementSystem:
         else:
             allocation['servers'] = remaining_energy
             remaining_energy = 0
-            _energy_deficit += server_need - allocation['servers']
-            if _energy_deficit > 0:
-                battery_discharge = self.battery.discharge_battery(_energy_deficit, weather['temperature'])
+            allocation['_energy_deficit'] += server_need - allocation['servers']
+            if allocation['_energy_deficit'] > 0:
+                battery_discharge = self.battery.discharge_battery(allocation['_energy_deficit'], weather['temperature'])
                 allocation['servers'] += battery_discharge
                 allocation['battery_change'] -= battery_discharge
-                _energy_deficit -= battery_discharge
             
         # Priority 2: Irrigation (if any energy left and irrigation conditions met)
         if remaining_energy > 0 and self.irrigation_hours < 8:
@@ -66,10 +65,10 @@ class EnergyManagementSystem:
         else:
             # Allocate acceptable discharge equal to hourly discharge rate for 18 hours autonomy
             acceptable_discharge = (self.battery.capacity - server_need * 24) / 12        
-            if self.battery.charge > acceptable_discharge:
+            if self.battery.charge > acceptable_discharge + server_need:
                 # allocates GPUs to use all acceptable discharge
                 allocation['gpu'] = self.energy_profile.gpu_power_consumption(acceptable_discharge)
-                allocation['battery_change'] -= self.battery.discharge_battery(acceptable_discharge, weather['temperature'])
+                allocation['battery_change'] -= self.battery.discharge_battery(allocation['gpu'], weather['temperature'])
                 
         # Use remaining energy for Battery Charging
         if remaining_energy > 0:

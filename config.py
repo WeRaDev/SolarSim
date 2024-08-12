@@ -42,6 +42,7 @@ class SimulationConfig:
     energy_profile: EnergyProfileConfig
     capex: float
     gpu_cost_per_unit: float
+    num_gpus: int
     staking_rental_price: float
     gpu_rental_price: float
     year: int
@@ -61,7 +62,7 @@ default_config = SimulationConfig(
         annual_degradation=0.005
     ),
     battery=BatteryConfig(
-        capacity=800,
+        capacity=500,
         initial_charge=250,
         efficiency=0.9
     ),
@@ -75,12 +76,13 @@ default_config = SimulationConfig(
         cooling_efficiency=0.4,
         gpu_power=0.7,
         gpu_utilization_range=(0.7, 0.9),
-        num_gpus=20        
+        num_gpus=20       
     ),
-    capex=2070500,  # Example value, adjust as needed
-    gpu_cost_per_unit=42000,  # Example value
-    staking_rental_price=0.3,  # per unit per hour
-    gpu_rental_price=2.5,  # per unit per hour
+    gpu_cost_per_unit=42000,  # Estimate H100 price
+    num_gpus=20, #Temprorary fix
+    capex=1394000,  # Estimate project const excluding GPUs
+    staking_rental_price=0.3 * 24 * 32 / 36 / 1.3,  # per kWh per node
+    gpu_rental_price=2.5 / 0.7 / 1.3,  # per kWh per unit
     year = 2023,
 )
 

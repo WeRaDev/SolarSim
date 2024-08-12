@@ -79,7 +79,9 @@ def generate_charts():
     
     # Calculate available energy for the entire dataset
     df['available_energy'] = df['production'] + df['battery_charge']
-    
+    # Calculate profit for the entire dataset
+    df['staking_profit'] = df['servers'] * config.staking_rental_price
+    df['gpu_profit'] = df['gpu'] * config.gpu_rental_price
     # Define time ranges
     year_range = df.index
     summer_week = df.loc[f'{year}-08-15':f'{year}-08-22'].copy()
@@ -90,37 +92,49 @@ def generate_charts():
     # Calculate available energy for each subset
     for subset in [summer_week, winter_week, summer_day, winter_day]:
         subset['available_energy'] = subset['production'] + subset['battery_charge']
+  
+    # Calculate profit for each subset
+    for subset in [summer_week, winter_week, summer_day, winter_day]:
+        subset['staking_profit'] = subset['servers'] * config.staking_rental_price
+        subset['gpu_profit'] = subset['gpu'] * config.gpu_rental_price
     
     # 1. Energy production vs weather conditions
     weather_conditions = ['sun_intensity', 'temperature', 'humidity', 'cloud_cover', 'wind_speed']
     for condition in weather_conditions:
         plot_chart(df, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'year', kind='scatter')
-        plot_chart(summer_week, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'week', kind='scatter')
-        plot_chart(winter_week, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'week', kind='scatter')
-        plot_chart(summer_day, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'day', kind='scatter')
-        plot_chart(winter_day, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'day', kind='scatter')
+        plot_chart(summer_week, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'summer_week', kind='scatter')
+        plot_chart(winter_week, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'winter_week', kind='scatter')
+        plot_chart(summer_day, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'summer_day', kind='scatter')
+        plot_chart(winter_day, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'winter_day', kind='scatter')
     
     # 2. Energy production versus consumption
     plot_chart(df, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'year')
-    plot_chart(summer_week, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'week')
-    plot_chart(winter_week, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'week')
-    plot_chart(summer_day, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'day')
-    plot_chart(winter_day, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'day')
+    plot_chart(summer_week, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'summer_week')
+    plot_chart(winter_week, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'winter_week')
+    plot_chart(summer_day, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'summer_day')
+    plot_chart(winter_day, 'datetime', ['production', 'total_consumption'], 'Energy Production vs Consumption', 'Date', 'Energy (kWh)', 'winter_day')
     
     # 3. Energy profile vs allocation
     energy_components = ['irrigation', 'servers', 'gpu']
-    plot_chart(df, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'year', kind='area')
-    plot_chart(summer_week, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'week', kind='area')
-    plot_chart(winter_week, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'week', kind='area')
-    plot_chart(summer_day, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'day', kind='area')
-    plot_chart(winter_day, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'day', kind='area')
+    plot_chart(df, 'datetime', energy_components, 'Energy Profile', 'Date', 'Energy (kWh)', 'year', kind='area')
+    plot_chart(summer_week, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'summer_week', kind='area')
+    plot_chart(winter_week, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'winter_week', kind='area')
+    plot_chart(summer_day, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'summer_day', kind='area')
+    plot_chart(winter_day, 'datetime', energy_components, 'Energy Profile vs Allocation', 'Date', 'Energy (kWh)', 'winter_day', kind='area')
     
     # 4. Available energy vs energy profile
     plot_chart(df, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'year')
-    plot_chart(summer_week, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'week')
-    plot_chart(winter_week, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'week')
-    plot_chart(summer_day, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'day')
-    plot_chart(winter_day, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'day')
+    plot_chart(summer_week, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'summer_week')
+    plot_chart(winter_week, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'winter_week')
+    plot_chart(summer_day, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'summer_day')
+    plot_chart(winter_day, 'datetime', ['available_energy', 'total_consumption', 'battery_charge'], 'Available Energy vs Energy Profile', 'Date', 'Energy (kWh)', 'winter_day')
+
+    # 5. Profit vs energy produced
+    plot_chart(df, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'year')
+    plot_chart(summer_week, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'summer_week')
+    plot_chart(winter_week, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'winter_week')
+    plot_chart(summer_day, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'summer_day')
+    plot_chart(winter_day, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'winter_day')
 
 if __name__ == "__main__":
     generate_charts()

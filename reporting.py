@@ -25,12 +25,14 @@ def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimul
     print(f"Minimum Battery Level: {min_battery_level:.2f} kWh ({min_battery_level/battery.capacity:.2%} of capacity)")
 
     print("\nAnnual Revenue:")
-    print(f"  Staking: ${results['annual_revenue']['staking']:.2f}")
-    print(f"  GPU Rental: ${results['annual_revenue']['gpu_rental']:.2f}")
-    print(f"  Total: ${results['annual_revenue']['total']:.2f}")
+    print(f"  Staking: €{results['annual_revenue']['staking']:.2f}")
+    print(f"  GPU Rental: €{results['annual_revenue']['gpu_rental']:.2f}")
+    print(f"  Total: €{results['annual_revenue']['total']:.2f}")
+    print(f"  Profitability: {results['annual_revenue']['ROI']:.2f}%")
 
     print("\nROI Analysis (7-year period):")
-    print(f"  Total Revenue: ${results['roi_analysis']['total_revenue_7years']:.2f}")
+    print(f"  Total Revenue: €{results['roi_analysis']['total_revenue_7years']:.2f}")
+    print(f"  CapEx: €{results['roi_analysis']['capex']:.2f}")    
     print(f"  Profit: ${results['roi_analysis']['profit_7years']:.2f}")
     print(f"  ROI: {results['roi_analysis']['roi_7years']:.2f}%")
     print(f"  Payback Period: {results['roi_analysis']['payback_period']:.2f} years")
