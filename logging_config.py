@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 import os
+from datetime import datetime
 
 def setup_logging(log_dir='logs', level=None, file_level=None, console_level=None):
     if not os.path.exists(log_dir):
@@ -21,22 +22,24 @@ def setup_logging(log_dir='logs', level=None, file_level=None, console_level=Non
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # Set to lowest level to capture all logs
 
-    # Create file handler which logs even debug messages
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(file_level)
+    # Create separate log files for different components
+    components = ['WeatherSimulator', 'SolarParkSimulator', 'EnergyProfile', 'BatteryStorage', 'EnergyManagementSystem']
+    for component in components:
+        handler = logging.FileHandler(os.path.join(log_dir, f'{component.lower()}.log'))
+        handler.setLevel(file_level)
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logger.addHandler(handler)
+
+    # Create a general log file
+    general_handler = logging.FileHandler(os.path.join(log_dir, 'general.log'))
+    general_handler.setLevel(file_level)
+    general_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(general_handler)
 
     # Create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(console_level)
-
-    # Create formatter and add it to the handlers
-    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    console_formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(file_formatter)
-    ch.setFormatter(console_formatter)
-
-    # Add the handlers to the logger
-    logger.addHandler(fh)
+    ch.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(ch)
 
     return logger

@@ -3,7 +3,7 @@ from logging_config import log_exceptions, get_logger
 
 class BatteryStorage:
     def __init__(self, capacity: float, initial_charge: float = None, efficiency: float = 0.9):
-        self.capacity = capacity
+        self.capacity = capacity # Measured in kWh
         self.charge = initial_charge if initial_charge is not None else capacity * 0.5
         self.efficiency = efficiency
         self.previous_charge = self.charge

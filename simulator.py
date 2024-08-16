@@ -44,10 +44,10 @@ class Simulator:
         self.logger.info("Starting annual simulation")
         results = []
         with open(self.data_file, 'w', newline='') as csvfile:
-            fieldnames = ['datetime', 'sun_intensity', 'temperature', 'humidity', 
-                          'is_raining', 'cloud_cover', 'wind_speed',
-                          'production', 'irrigation', 'servers', 'gpu', 'battery_change',
-                          'total_consumption', 'battery_charge', 'energy_deficit']
+            fieldnames = ['datetime', 'ghi', 'dni', 'temperature', 'humidity', 
+              'is_raining', 'cloud_cover', 'wind_speed',
+              'production', 'irrigation', 'servers', 'gpu', 'battery_change',
+              'total_consumption', 'battery_charge', 'energy_deficit', 'extra_energy']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             
@@ -57,7 +57,12 @@ class Simulator:
                 for result in daily_results:
                     writer.writerow(result)
         
-        self.logger.info("Completed annual simulation")
+        total_production = sum(result['production'] for result in results)
+        total_consumption = sum(result['total_consumption'] for result in results)
+        total_extra_energy = sum(result['extra_energy'] for result in results)
+        self.logger.info(f"Annual simulation completed. Total production: {total_production:.2f} kWh, "
+                         f"Total consumption: {total_consumption:.2f} kWh, "
+                         f"Total extra energy: {total_extra_energy:.2f} kWh")
         return results
 
     def _run_daily_simulation(self, day: int) -> List[Dict[str, Any]]:
@@ -73,10 +78,12 @@ class Simulator:
         production = self.solar_park.calculate_hourly_energy(weather)
         allocation = self.ems.allocate_energy(production, month, hour, weather)
         #energy_deficit = max(0, allocation['total_consumption'] - production - allocation['battery_change'])
+        extra_energy = production - allocation['total_consumption'] - allocation['battery_change']
         
         step_data = {
             'datetime': datetime(self.config.year, 1, 1) + timedelta(days=day, hours=hour),
-            'sun_intensity': weather['sun_intensity'],
+            'ghi': weather['ghi'],
+            'dni': weather['dni'],
             'temperature': weather['temperature'],
             'humidity': weather['humidity'],
             'is_raining': weather['is_raining'],
@@ -89,7 +96,8 @@ class Simulator:
             'battery_change': allocation['battery_change'],
             'total_consumption': allocation['total_consumption'],
             'battery_charge': self.battery.charge,
-            'energy_deficit': allocation['_energy_deficit']
+            'energy_deficit': allocation['_energy_deficit'],
+            'extra_energy': max(0, extra_energy)  # Ensure extra energy is non-negative
         }
         
         self._validate_simulation_step(step_data)
@@ -107,41 +115,49 @@ class Simulator:
             self.logger.warning(f"Negative battery charge: {step_data['battery_charge']} at {step_data['datetime']}")
         if step_data['total_consumption'] == 0:
             self.logger.info(f"Zero consumption at {step_data['datetime']}")
-        if step_data['production'] == 0 and step_data['sun_intensity'] > 0:
-            self.logger.info(f"Zero production with non-zero sun intensity at {step_data['datetime']}")
+        if step_data['production'] == 0 and (step_data['ghi'] > 0 or step_data['dni'] > 0):
+            self.logger.info(f"Zero production with non-zero irradiance at {step_data['datetime']}")
 
-    def generate_report(self, results: List[Dict[str, Any]]) -> str:
+
+    def generate_report(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
         df_results = pd.DataFrame(results)
+        
+        # Ensure 'datetime' is a datetime type and set it as the index
+        df_results['datetime'] = pd.to_datetime(df_results['datetime'])
+        df_results.set_index('datetime', inplace=True)
         
         total_production = df_results['production'].sum()
         total_consumption = df_results['total_consumption'].sum()
         average_battery_charge = df_results['battery_charge'].mean()
         total_energy_deficit = df_results['energy_deficit'].sum()
-
+    
         # Calculate revenues
         staking_revenue = df_results['servers'].sum() * self.config.staking_rental_price
         gpu_revenue = df_results['gpu'].sum() * self.config.gpu_rental_price
         total_revenue = staking_revenue + gpu_revenue
         roi = (total_revenue / (self.config.capex + self.config.num_gpus * self.config.gpu_cost_per_unit)) * 100
-
+    
         # ROI Analysis
         total_revenue_7years = total_revenue * 7
         capex = (self.config.capex + self.config.num_gpus * self.config.gpu_cost_per_unit)
         profit_7years = total_revenue_7years - capex
         roi_7years = (profit_7years / capex) * 100
         payback_period = capex / total_revenue
-
+    
         results_summary = {
             'hourly_production': df_results['production'].values,
             'hourly_consumption': {
                 'total': df_results['total_consumption'].values,
                 'farm_irrigation': df_results['irrigation'].values,
+                'servers': df_results['servers'].values,
+                'gpu': df_results['gpu'].values,
                 'data_center': df_results['servers'].values + df_results['gpu'].values
             },
             'battery_charge': df_results['battery_charge'].values,
             'energy_deficit': df_results['energy_deficit'].values,
             'total_annual_production': total_production,
             'total_annual_consumption': total_consumption,
+            'total_extra_energy': df_results['extra_energy'].sum(),
             'average_battery_charge': average_battery_charge,
             'total_energy_deficit': total_energy_deficit,
             'specific_yield': total_production / self.solar_park.total_capacity,
@@ -159,7 +175,17 @@ class Simulator:
                 'payback_period': payback_period
             }
         }
-
+    
+        # Calculate daily totals
+        results_summary['daily_production'] = df_results.groupby(df_results.index.date)['production'].sum().tolist()
+        results_summary['daily_consumption'] = df_results.groupby(df_results.index.date)['total_consumption'].sum().tolist()
+        results_summary['daily_deficit'] = df_results.groupby(df_results.index.date)['energy_deficit'].sum().tolist()
+        
+        results_summary['peak_production'] = df_results['production'].max()
+        results_summary['peak_consumption'] = df_results['total_consumption'].max()
+        
+        results_summary['capacity_factor'] = (total_production / (self.solar_park.total_capacity * 8760)) * 100
+    
         return results_summary
 
 def main():

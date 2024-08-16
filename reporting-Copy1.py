@@ -7,9 +7,9 @@ from energy_profile import EnergyProfile
 from battery_storage import BatteryStorage
 from energy_management_system import EnergyManagementSystem
 from weather_simulator import WeatherSimulator
-from config import SimulationConfig
+from config import SolarParkConfig
 
-def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimulator, battery: BatteryStorage, energy_profile: EnergyProfile, config: SimulationConfig):
+def generate_report_off_grid(results: Dict[str, Any], solar_park, battery, energy_profile, config):
     report = f"Off-Grid Solar Park Simulation Report for {solar_park.weather_simulator.location}\n"
     report += "=" * 70 + "\n\n"
     report += f"Simulation Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
@@ -28,17 +28,14 @@ def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimul
     min_battery_level = np.min(results['battery_charge'])
     report += f"Minimum Battery Level: {min_battery_level:.2f} kWh ({min_battery_level/battery.capacity:.2%} of capacity)\n"
 
-    report += "\nMonthly Energy Production (kWh):\n"
-    if 'monthly_production' in results:
-        for month, production in enumerate(results['monthly_production'], 1):
-            report += f"  Month {month}: {production:.2f}\n"
-    else:
-        report += "  Monthly production data not available\n"
+#    report += "\nMonthly Energy Production (kWh):\n"
+#    for month, production in enumerate(solar_park['monthly_production'], 1):
+#        report += f"  Month {month}: {production:.2f}\n"
 
     report += "\nEnergy Consumption Breakdown:\n"
-    report += f"  Irrigation: {np.sum(results['hourly_consumption']['farm_irrigation']):.2f} kWh\n"
-    report += f"  Servers: {np.sum(results['hourly_consumption']['data_center']):.2f} kWh\n"
-    report += f"  GPU: {np.sum(results['hourly_consumption']['gpu']):.2f} kWh\n"
+    report += f"  Irrigation: {results['hourly_consumption']['farm_irrigation']:.2f} kWh\n"
+    report += f"  Servers: {results['hourly_consumption']['servers']:.2f} kWh\n"
+    report += f"  GPU: {results['hourly_consumption']['gpu']:.2f} kWh\n"
 
     report += "\nAnnual Revenue:\n"
     report += f"  Staking: €{results['annual_revenue']['staking']:.2f}\n"
@@ -59,7 +56,7 @@ def generate_report_off_grid(results: Dict[str, Any], solar_park: SolarParkSimul
 
     report += "\nSystem Efficiency:\n"
     report += f"  Panel Efficiency: {solar_park.panel_efficiency:.2%}\n"
-    report += f"  Inverter Efficiency: {solar_park.performance_ratio:.2%}\n"
+    report += f"  Inverter Efficiency: {config.inverter_efficiency:.2%}\n"
     report += f"  Battery Efficiency: {battery.efficiency:.2%}\n"
 
     # Save the report to a file
@@ -81,29 +78,7 @@ def generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator,
                                         ems: EnergyManagementSystem) -> str:
     weather_data = weather_sim.get_daily_data(day)
     energy_production = solar_park.get_daily_production(weather_data)
-    
-    # Calculate consumption based on available methods
-    month = (day // 30) + 1  # Approximate month calculation
-    irrigation_consumption = [energy_profile.irrigation_need(
-        month, hour, {'is_raining': weather_data['is_raining'][hour]}
-    ) for hour in range(24)]
-    server_consumption = [energy_profile.server_power_consumption(hour) for hour in range(24)]
-    
-    # For GPU consumption, we need to estimate available energy
-    gpu_consumption = []
-    for hour in range(24):
-        available_energy = max(0, energy_production[hour] - irrigation_consumption[hour] - server_consumption[hour])
-        gpu_consumption.append(energy_profile.gpu_power_consumption(available_energy))
-    
-    total_consumption = [irrigation_consumption[i] + server_consumption[i] + gpu_consumption[i] for i in range(24)]
-    
-    energy_consumption = {
-        'irrigation': irrigation_consumption,
-        'servers': server_consumption,
-        'gpu': gpu_consumption,
-        'total': total_consumption
-    }
-    
+    energy_consumption = energy_profile.get_daily_consumption(day, weather_data, energy_production)
     battery_data = battery.get_daily_data()
     energy_allocation = ems.get_daily_allocation(day, weather_data)
 
@@ -116,16 +91,11 @@ def generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator,
     report += "\n"
 
     report += "Energy Production (kWh):\n"
-    for hour, prod in enumerate(energy_production):
-        report += f"  Hour {hour}: {prod:.2f}\n"
-    report += f"Total: {sum(energy_production):.2f}\n\n"
+    report += f"  {energy_production}\n\n"
 
     report += "Energy Consumption (kWh):\n"
     for key in energy_consumption:
-        report += f"  {key}:\n"
-        for hour, cons in enumerate(energy_consumption[key]):
-            report += f"    Hour {hour}: {cons:.2f}\n"
-        report += f"  Total {key}: {sum(energy_consumption[key]):.2f}\n"
+        report += f"  {key}: {energy_consumption[key]}\n"
     report += "\n"
 
     report += "Battery Data:\n"
@@ -137,15 +107,18 @@ def generate_comprehensive_daily_report(day: int, weather_sim: WeatherSimulator,
     for hour, allocation in enumerate(energy_allocation):
         report += f"  Hour {hour}:\n"
         for key, value in allocation.items():
-            report += f"    {key}: {value:.2f}\n"
+            report += f"    {key}: {value}\n"
     report += "\n"
 
-    # Calculate energy surplus
-    energy_surplus = [max(0, energy_production[i] - total_consumption[i]) for i in range(24)]
+    # Calculate energy available for 24/7 supply and surplus
+    total_production = sum(energy_production)
+    total_consumption = sum(energy_consumption['total'])
+    energy_surplus = [max(0, energy_production[i] - energy_consumption['total'][i]) for i in range(24)]
     
     report += "Energy Analysis:\n"
-    report += f"  Total Production: {sum(energy_production):.2f} kWh\n"
-    report += f"  Total Consumption: {sum(total_consumption):.2f} kWh\n"
+    report += f"  Total Production: {total_production:.2f} kWh\n"
+    report += f"  Total Consumption: {total_consumption:.2f} kWh\n"
+    report += f"  Energy Available for 24/7 Supply: {min(energy_production):.2f} kWh/hour\n"
     report += f"  Total Energy Surplus: {sum(energy_surplus):.2f} kWh\n"
     report += "  Hourly Energy Surplus:\n"
     for hour, surplus in enumerate(energy_surplus):

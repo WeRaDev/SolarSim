@@ -29,7 +29,7 @@ class EnergyProfile:
     @jit(nopython=True)
     def _irrigation_need_optimized(month: int, is_raining: bool, irrigation_months: List[int], pumps_power: float, dosing_pump_power: float, programmer_power: float):
         if month in irrigation_months and not is_raining:
-            return pumps_power + dosing_pump_power + programmer_power
+            return (pumps_power + dosing_pump_power + programmer_power) # Simplified workload in kWh
         return 0
 
     @log_exceptions
@@ -42,7 +42,7 @@ class EnergyProfile:
     @jit(nopython=True)
     # Staking servers should run 24/7 disregarding the demand but considering cooling efficiency
     def _server_power_consumption_optimized(hour: int, staking_nodes: int, staking_power: float) -> float:
-        return staking_power * 1.3 # Simplified cooling load
+        return staking_power * 1.3 # Simplified workload with cooling in kWh
 
     @log_exceptions
     def gpu_power_consumption(self, available_energy: float):
@@ -53,6 +53,6 @@ class EnergyProfile:
     @staticmethod
     @jit(nopython=True)
     def _gpu_power_consumption_optimized(available_energy: float, gpu_power: float, num_gpus: int, gpu_utilization_range: List[float]):
-        max_gpu_power = gpu_power * num_gpus * 1.3 # added simplified cooling load
+        max_gpu_power = gpu_power * num_gpus * 1.3 # added workload with cooling in kWh
         utilization = min(1, available_energy / max_gpu_power)
         return max_gpu_power * utilization * np.random.uniform(gpu_utilization_range[0], gpu_utilization_range[1])

@@ -70,7 +70,7 @@ def plot_chart(df: pd.DataFrame, x: str, y: Union[str, List[str]], title: str, x
 # Remove unused functions
 # Removed plot_energy_data and plot_battery_profile as they're not used in generate_charts
 
-def generate_charts():
+def generate_charts(results_summary: Dict[str, Any]):
     config = load_config()
     year = config.year
     
@@ -99,7 +99,7 @@ def generate_charts():
         subset['gpu_profit'] = subset['gpu'] * config.gpu_rental_price
     
     # 1. Energy production vs weather conditions
-    weather_conditions = ['sun_intensity', 'temperature', 'humidity', 'cloud_cover', 'wind_speed']
+    weather_conditions = ['ghi', 'dni', 'temperature', 'humidity', 'cloud_cover', 'wind_speed']
     for condition in weather_conditions:
         plot_chart(df, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'year', kind='scatter')
         plot_chart(summer_week, condition, 'production', f'Energy Production vs {condition.capitalize()}', condition, 'Energy Production (kWh)', 'summer_week', kind='scatter')
@@ -135,6 +135,39 @@ def generate_charts():
     plot_chart(winter_week, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'winter_week')
     plot_chart(summer_day, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'summer_day')
     plot_chart(winter_day, 'datetime', ['gpu_profit', 'staking_profit'], 'GPUs vs Staking Profit', 'Date', 'Euros per hour (€h)', 'winter_day')
+    
+    hourly_production = pd.Series(results_summary['hourly_production'])
+    hourly_consumption = pd.DataFrame(results_summary['hourly_consumption'])
+    
+    plt.figure(figsize=(12, 6))
+    plt.plot(hourly_production.index, hourly_production.values)
+    plt.title('Hourly Energy Production')
+    plt.xlabel('Hour')
+    plt.ylabel('Energy (kWh)')
+    plt.savefig('charts/hourly_production_summary.png')
+    plt.close()
+    
+    plt.figure(figsize=(12, 6))
+    hourly_consumption.plot(kind='area', stacked=True)
+    plt.title('Hourly Energy Consumption Breakdown')
+    plt.xlabel('Hour')
+    plt.ylabel('Energy (kWh)')
+    plt.legend(title='Consumption Type')
+    plt.savefig('charts/hourly_consumption_summary.png')
+    plt.close()
+    
+    # Add more charts using results_summary data as needed
 
 if __name__ == "__main__":
-    generate_charts()
+    # This allows you to run the script independently for testing
+    import random
+    dummy_results = {
+        'hourly_production': [random.random() * 100 for _ in range(24)],
+        'hourly_consumption': {
+            'total': [random.random() * 80 for _ in range(24)],
+            'farm_irrigation': [random.random() * 20 for _ in range(24)],
+            'data_center': [random.random() * 60 for _ in range(24)]
+        },
+        # Add other dummy data as needed
+    }
+    generate_charts(dummy_results)
