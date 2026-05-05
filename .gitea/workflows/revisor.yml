@@ -76,9 +76,9 @@ jobs:
               return "PASS" if o == "success" else "FAIL"
 
           checks = [
-              ("Syntax check (compile)", os.environ["COMPILE_RESULT"], f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_compile.txt"),
-              ("Lint (ruff)",            os.environ["LINT_RESULT"],    f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_lint.txt"),
-              ("Security (bandit)",      os.environ["BANDIT_RESULT"],  f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_bandit.txt"),
+              ("Syntax check (compile)", os.environ["COMPILE_RESULT"], f"{os.environ.get('REVISOR_PREFIX', '/tmp/revisor')}_compile.txt"),
+              ("Lint (ruff)",            os.environ["LINT_RESULT"],    f"{os.environ.get('REVISOR_PREFIX', '/tmp/revisor')}_lint.txt"),
+              ("Security (bandit)",      os.environ["BANDIT_RESULT"],  f"{os.environ.get('REVISOR_PREFIX', '/tmp/revisor')}_bandit.txt"),
           ]
 
           all_pass   = all(o == "success" for _, o, _ in checks)
