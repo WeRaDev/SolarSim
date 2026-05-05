@@ -11,7 +11,7 @@ from logging_config import setup_logging, log_exceptions, get_logger
 import logging
 from reporting import generate_report_off_grid
 from config import load_config, SimulationConfig
-from typing import Dict, Any, List, Any
+from typing import Dict, List, Any
 from helper import DateHelper
 
 class Simulator:
