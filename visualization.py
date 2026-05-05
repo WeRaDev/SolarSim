@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.dates import DateFormatter
 import os
-from typing import Dict, Any, List, Union
-import numpy as np
+from typing import List, Union
 from config import load_config
 
 # Add seaborn for improved plot aesthetics
@@ -81,7 +80,6 @@ def generate_charts():
     df['available_energy'] = df['production'] + df['battery_charge']
     
     # Define time ranges
-    year_range = df.index
     summer_week = df.loc[f'{year}-08-15':f'{year}-08-22'].copy()
     winter_week = df.loc[f'{year}-03-15':f'{year}-03-22'].copy()
     summer_day = df.loc[f'{year}-08-23'].copy()

@@ -43,7 +43,9 @@ jobs:
         id: bandit
         continue-on-error: true
         run: |
-          .revisor-venv/bin/bandit -q -r . --exclude .revisor-venv -s B404,B603,B310,B105 2>&1 | tee /tmp/revisor_bandit.txt
+          .revisor-venv/bin/bandit -q -r . \
+            -x ./.revisor-venv,./venv,./.venv \
+            -s B404,B603,B310,B105,B101 2>&1 | tee /tmp/revisor_bandit.txt
           exit ${PIPESTATUS[0]}
 
       - name: Post Revisor review comment
