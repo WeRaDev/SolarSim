@@ -29,14 +29,14 @@ jobs:
         id: compile
         continue-on-error: true
         run: |
-          .revisor-venv/bin/python -m compileall -q . 2>&1 | tee /tmp/revisor_compile.txt
+          .revisor-venv/bin/python -m compileall -q . 2>&1 | tee /tmp/revisor_${GITHUB_RUN_ID}_compile.txt
           exit ${PIPESTATUS[0]}
 
       - name: Lint (ruff)
         id: lint
         continue-on-error: true
         run: |
-          .revisor-venv/bin/ruff check . 2>&1 | tee /tmp/revisor_lint.txt
+          .revisor-venv/bin/ruff check . 2>&1 | tee /tmp/revisor_${GITHUB_RUN_ID}_lint.txt
           exit ${PIPESTATUS[0]}
 
       - name: Security static analysis (bandit)
@@ -45,7 +45,7 @@ jobs:
         run: |
           .revisor-venv/bin/bandit -q -r . \
             -x ./.revisor-venv,./venv,./.venv \
-            -s B404,B603,B310,B105,B101 2>&1 | tee /tmp/revisor_bandit.txt
+            -s B404,B603,B310,B105,B101 2>&1 | tee /tmp/revisor_${GITHUB_RUN_ID}_bandit.txt
           exit ${PIPESTATUS[0]}
 
       - name: Post Revisor review comment
@@ -59,6 +59,7 @@ jobs:
           LINT_RESULT: ${{ steps.lint.outcome }}
           BANDIT_RESULT: ${{ steps.bandit.outcome }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REVISOR_PREFIX: /tmp/revisor_${{ github.run_id }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
@@ -75,9 +76,9 @@ jobs:
               return "PASS" if o == "success" else "FAIL"
 
           checks = [
-              ("Syntax check (compile)", os.environ["COMPILE_RESULT"], "/tmp/revisor_compile.txt"),
-              ("Lint (ruff)",            os.environ["LINT_RESULT"],    "/tmp/revisor_lint.txt"),
-              ("Security (bandit)",      os.environ["BANDIT_RESULT"],  "/tmp/revisor_bandit.txt"),
+              ("Syntax check (compile)", os.environ["COMPILE_RESULT"], f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_compile.txt"),
+              ("Lint (ruff)",            os.environ["LINT_RESULT"],    f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_lint.txt"),
+              ("Security (bandit)",      os.environ["BANDIT_RESULT"],  f"{os.environ.get(\'REVISOR_PREFIX\', \'/tmp/revisor\')}_bandit.txt"),
           ]
 
           all_pass   = all(o == "success" for _, o, _ in checks)
